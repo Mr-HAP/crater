@@ -1,16 +1,13 @@
-FROM php:8.1-fpm
-
-ARG user=crater-user
-ARG uid=1000
+FROM php:8.1-apache
 
 RUN apt-get update && apt-get install -y \
     git \
     curl \
+    unzip \
+    zip \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
-    zip \
-    unzip \
     libzip-dev \
     libmagickwand-dev \
     mariadb-client \
@@ -23,10 +20,22 @@ RUN docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-RUN useradd -G www-data,root -u ${uid} -d /home/${user} ${user} \
-    && mkdir -p /home/${user}/.composer \
-    && chown -R ${user}:${user} /home/${user}
+RUN a2enmod rewrite
 
-WORKDIR /var/www
+WORKDIR /var/www/html
 
-USER ${user}
+COPY . /var/www/html
+
+RUN composer install --optimize-autoloader --no-interaction
+
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
+ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
+
+RUN sed -ri -e 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/*.conf \
+    && sed -ri -e 's!/var/www/!/var/www/html/public!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+
+EXPOSE 80
+
+CMD ["apache2-foreground"]
