@@ -1,6 +1,6 @@
-FROM php:8.1-cli
+FROM php:8.1-fpm
 
-ARG user=www
+ARG user=crater-user
 ARG uid=1000
 
 RUN apt-get update && apt-get install -y \
@@ -29,15 +29,4 @@ RUN useradd -G www-data,root -u ${uid} -d /home/${user} ${user} \
 
 WORKDIR /var/www
 
-COPY . /var/www
-
-RUN composer install --optimize-autoloader --no-interaction
-
-RUN chown -R ${user}:www-data /var/www \
-    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
-
 USER ${user}
-
-EXPOSE 8000
-
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
