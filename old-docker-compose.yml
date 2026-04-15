@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   app:
     build:
@@ -7,7 +5,10 @@ services:
       dockerfile: Dockerfile
       args:
         user: crater-user
-        uid: 1000
+        uid: 501
+      context: ./
+      dockerfile: Dockerfile
+    user: "501:501"
     image: crater-php
     restart: unless-stopped
     working_dir: /var/www
@@ -24,7 +25,7 @@ services:
     depends_on:
       - app
     ports:
-      - "80:80"
+      - 85:80
     volumes:
       - ./:/var/www
       - fakturo-storage:/var/www/storage
